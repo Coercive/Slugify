@@ -1,95 +1,61 @@
-Coercive FileUpload Utility
-===========================
+Coercive Slugify Utility
+========================
 
-FileUpload enables you to manage file shipments : moving, copying , deleting temporary files , retrieving information ...
+Slugify allows you to clean the characters in a string for treatment of URL rewriting for example. Other options can detect proper names, clean spaces, move text into utf8 etc ...
 
 Get
 ---
 ```
-composer require coercive/fileupload
+composer require coercive/slugify
 ```
 
 Usage
 -----
 
-**IMAGE**
+**URL**
 ```php
-use Coercive\Utility\FileUpload;
+use Coercive\Utility\Slugify;
 
-# EXAMPLE IMAGE FILE
-$oImageUpload = new ImageUpload([
-	ImageUpload::OPTIONS_NAME => 'img_file',
-	ImageUpload::OPTIONS_ALLOWED_EXTENSIONS => ['jpeg', 'jpg', 'gif', 'png']
-]);
+$sTitleArticle = 'My title is not made to work with a URL rewriting directly, it must be processed before.';
+$sSlug = (new Slugify)->clean($sTitleArticle);
 
-# ERRORS
-if($oImageUpload->getErrors()) { exit; }
-
-# SAVE : add extension auto
-$oImageUpload->save('/example/path/' . $sImgName_auto_extension);
-if($oImageUpload->getErrors()) { exit; }
-
-# Where is my file ?
-$sMyFile = $oImageUpload->getDestPath();
-```
-
-**FILE**
-```php
-use Coercive\Utility\FileUpload;
-
-# EXAMPLE FILE
-$oFileUpload = new FileUpload([
-	FileUpload::OPTIONS_NAME => 'file',
-	FileUpload::OPTIONS_ALLOWED_EXTENSIONS => ['pdf']
-]);
-
-# ERRORS
-if($oFileUpload->getErrors()) { exit; }
-
-# SAVE
-$oFileUpload->save('/example/path/' . $sFileName . '.pdf');
-if($oFileUpload->getErrors()) { exit; }
-```
-
-**HELP**
-```php
-use Coercive\Utility\FileUpload;
-
-# Need Something ?
-$oFileUpload
-    ->getDestPath();
-...
-    ->getFilePathInfo();
-...
-    ->getMaxFileSize();
-...
-    ->getFileSize();
-...
-    ->getFileError();
-...
-    ->getFileType();
-...
-    ->getFilePath();
-...
-    ->getFileExtension();
-...
-    ->getFileName();
-...
-    ->getErrors();
-    
-# You can delete temp file by using :
-$oFileUpload
-    ->deleteTempFile();
+# GIVE : my-title-is-not-made-to-work-with-a-url-rewriting-directly-it-must-be-processed-before
 
 ```
 
-**OPTIONS**
+**SUMMARY**
 ```php
-# FileUpload / ImageUpload : Constructor Options
-array(
-    FileUpload::OPTIONS_NAME => '', # (string) input file name
-    FileUpload::OPTIONS_ALLOWED_EXTENSIONS => [], # (array) of strings example : ['jpg', 'gif']
-    FileUpload::OPTIONS_DISALLOWED_EXTENSIONS => [], # (array) of strings
-    FileUpload::OPTIONS_MAX_SIZE => self::DEFAULT_MAX_SIZE, # (int) default : 10485760 (10 Mo)
-);
+use Coercive\Utility\Slugify;
+
+$sText = 'Long text ... Very Long Text ...';
+$sSummary = (new Slugify)->substrText($sText);
+
+# GIVE : 300chars text
+
+$sSummary = (new Slugify)->substrText($sText, 500);
+
+# GIVE : 500chars text
+```
+
+**NAME**
+```php
+use Coercive\Utility\Slugify;
+
+$sName = 'Mary Antoinette';
+$bIsName = (new Slugify)->pregName($sName);
+
+# True
+
+$sName = '@Not A valid name !';
+$bIsName = (new Slugify)->pregName($sName);
+
+# False
+```
+
+**TO UTF8**
+```php
+use Coercive\Utility\Slugify;
+
+$sString = '&#33;&#87;&#126;&quot;&middot;&oslash;&Upsilon;&psi;';
+$sUtf8String = (new Slugify)->toUTF8($sString);
 ```
