@@ -547,7 +547,7 @@ class Slugify {
 	public function pregName($sName) {
 		$sAccep = '';
 		foreach($this->a as $sAcceptLetter) { $sAccep .= $sAcceptLetter; }
-		return preg_match('#^[a-zA-Z'.$sAccep.'\- ]+$#', $sName);
+		return preg_match('#^[a-zA-Z'.$sAccep.'\'\- ]+$#', $sName);
 	}
 
 	/**
