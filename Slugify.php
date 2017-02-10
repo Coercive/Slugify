@@ -473,6 +473,20 @@ class Slugify {
 	public function decodeSpaces($sString) {
 		return str_replace(array_keys($this->_aSpaces), $this->_aSpaces, $sString);
 	}
+	
+	/**
+	 * REDECODE SPACES
+	 *
+	 * @param string $sString
+	 * @return string
+	 */
+	public function encodeSpaces($sString) {
+		$aSpaceEntities = array_keys($this->_aSpaces);
+		foreach ($aSpaceEntities as $sSpace) {
+			$sString = str_replace(html_entity_decode($sSpace, null, 'utf-8'), $sSpace, $sString);
+		}
+		return $sString;
+	}
 
 	/**
 	 * SANITIZE STRING
