@@ -18,10 +18,9 @@
         "psr-4": { "Coercive\\Utility\\Slugify\\": "" }
     },
     "minimum-stability" : "dev",
-    "prefer-stable" : true,
     "extra": {
         "branch-alias": {
-            "dev-master": "1-dev"
+            "dev-master": "1.0-dev"
         }
     }
 }
