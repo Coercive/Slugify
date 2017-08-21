@@ -569,14 +569,14 @@ class Slugify {
 	 *
 	 * @param string $sText
 	 * @param int $iNb
-	 * @return $this
+	 * @return string
 	 */
 	public function substrText($sText, $iNb = 300) {
 
 		# Security
 		$sText = $this->decodeSpaces($sText);
 		$sText = strip_tags($sText);
-		if (empty($sText)) { return null; }
+		if (!$sText) { return ''; }
 
 		# Extract
 		if(strlen($sText) < $iNb) { $iNb = strlen($sText); }
