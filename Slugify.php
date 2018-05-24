@@ -429,6 +429,14 @@ class Slugify {
 		'&thinsp;' => ' ', # fine space
 		'&#8239;' => ' ', # insecable fine space
 	];
+	private $_aApostrophes = [
+		'&apos;'  => '\'',
+		'&lsquo;' => '‘',
+		'&rsquo;' => '’',
+		'&sbquo;' => '‚',
+		'&acute;' => '´',
+		'&#96;'   => '`',
+	];
 
 	/**
 	 * DECODE TO UTF8
@@ -560,8 +568,8 @@ class Slugify {
 	 */
 	public function pregName($sName) {
 		$sAccep = '';
-		foreach($this->a as $sAcceptLetter) { $sAccep .= $sAcceptLetter; }
-		return preg_match('#^[a-zA-Z'.$sAccep.'\'\- ]+$#', $sName);
+		foreach(array_merge($this->a, $this->_aApostrophes) as $sAcceptLetter) { $sAccep .= $sAcceptLetter; }
+		return preg_match('#^[a-zA-Z'.$sAccep.'\- ]+$#', $sName);
 	}
 
 	/**
