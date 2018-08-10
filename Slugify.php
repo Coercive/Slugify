@@ -859,12 +859,13 @@ class Slugify {
 	 * @param string $text
 	 * @param int $length
 	 * @param string $decode [optional]
+	 * @param string $charset [optional]
 	 * @return string
 	 */
-	public function substrText(string $text, int $length = 300, string $decode = ENT_HTML5): string
+	public function substrText(string $text, int $length = 300, string $decode = ENT_HTML5, string $charset = 'UTF-8'): string
 	{
 		# Convert chars
-		$text = html_entity_decode($text, $decode, 'utf-8');
+		$text = html_entity_decode($text, $decode, $charset);
 		$text = $this->decodeSpaces($text);
 		$text = trim(strip_tags($text));
 		if (!$text) { return ''; }
