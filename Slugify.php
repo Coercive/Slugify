@@ -856,23 +856,25 @@ class Slugify {
 	/**
 	 * Extract Text
 	 *
-	 * @param string $sText
-	 * @param int $iNb
+	 * @param string $text
+	 * @param int $length
+	 * @param string $decode [optional]
 	 * @return string
 	 */
-	public function substrText($sText, $iNb = 300) {
-
-		# Security
-		$sText = $this->decodeSpaces($sText);
-		$sText = strip_tags($sText);
-		if (!$sText) { return ''; }
+	public function substrText(string $text, int $length = 300, string $decode = ENT_HTML5): string
+	{
+		# Convert chars
+		$text = html_entity_decode($text, $decode, 'utf-8');
+		$text = $this->decodeSpaces($text);
+		$text = trim(strip_tags($text));
+		if (!$text) { return ''; }
 
 		# Extract
-		if(strlen($sText) < $iNb) { $iNb = strlen($sText); }
-		$iNb = strpos($sText, ' ', $iNb);
-		if($iNb === false) { $iNb = strlen($sText); }
-		$sText = substr($sText, 0, $iNb);
+		if(strlen($text) < $length) { $length = strlen($text); }
+		$length = strpos($text, ' ', $length);
+		if($length === false) { $length = strlen($text); }
+		$text = substr($text, 0, $length);
 
-		return $sText;
+		return $text;
 	}
 }
