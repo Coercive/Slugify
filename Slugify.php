@@ -3,15 +3,13 @@ namespace Coercive\Utility\Slugify;
 
 /**
  * Slugify
- * PHP Version 	5
  *
- * @version		1
  * @package 	Coercive\Utility\Slugify
- * @link		@link https://github.com/Coercive/Slugify
+ * @link		https://github.com/Coercive/Slugify
  *
  * @author  	Anthony Moral <contact@coercive.fr>
- * @copyright   2016 - 2017 Anthony Moral
- * @license 	http://www.gnu.org/copyleft/lesser.html GNU Lesser General Public License
+ * @copyright   2018 Anthony Moral
+ * @license 	MIT
  */
 class Slugify {
 
@@ -877,5 +875,35 @@ class Slugify {
 		$text = substr($text, 0, $length);
 
 		return $text;
+	}
+	
+	/**
+	 * Clean string for sql search optimisation
+	 *
+	 * @return string
+	 */
+	public function searchSqlCleaner(string $str, string $decode = ENT_HTML5, string $charset = 'UTF-8'): string
+	{
+		# Décodage des entités HTML
+		$str = html_entity_decode($str, $decode, $charset);
+
+		# Suppression des tags HTML
+		$str = trim(strip_tags($str));
+
+		# Tout ce qui ressemble à une apostrophe en simple quote
+		$apos = '\\' . implode('|\\', $this->_aApostrophes);
+		$str = preg_replace("`$apos`", "'", $str);
+
+		# On ne garde que les caractères de l'alphabet et les chiffres + lettre accentuées et simple quote
+		mb_internal_encoding($charset);
+		mb_regex_encoding($charset);
+		$str = mb_eregi_replace( '[^a-z0-9'.implode('', $this->a).'\']+', ' ', $str ) ;
+
+		# Suppression espaces parasites
+		while (strpos($str, '  ') !== false) { $str = str_replace('  ', ' ', $str); }
+		$str = trim($str);
+
+		# Cleaned
+		return $str;
 	}
 }
