@@ -8,7 +8,7 @@ namespace Coercive\Utility\Slugify;
  * @link		https://github.com/Coercive/Slugify
  *
  * @author  	Anthony Moral <contact@coercive.fr>
- * @copyright   2018 Anthony Moral
+ * @copyright   © 2019 Anthony Moral
  * @license 	MIT
  */
 class Slugify {
@@ -723,28 +723,27 @@ class Slugify {
 	 *
 	 *  /!\ does not encode non-breaking spaces, thin spaces etc...
 	 *
-	 * @param string $sString
+	 * @param string $str
 	 * @return mixed
 	 */
-	public function toUTF8($sString) {
-
+	public function toUTF8(string $str): string
+	{
 		# HTMLENTITIES
-		$sString = str_replace(array_keys($this->_aHtmlEntities), $this->_aHtmlEntities, $sString);
+		$str = str_replace(array_keys($this->_aHtmlEntities), $this->_aHtmlEntities, $str);
 
 		# ISO
-		$sString = str_replace(array_keys($this->_aIsoCode), $this->_aIsoCode, $sString);
-
-		return $sString;
+		return str_replace(array_keys($this->_aIsoCode), $this->_aIsoCode, $str);
 	}
 
 	/**
 	 * AUTOMATIC HTML5 TO UTF8
 	 *
-	 * @param $sString
-	 * @return mixed
+	 * @param $str
+	 * @return string
 	 */
-	public function to_HTML5_UTF8($sString) {
-		return preg_replace_callback('`(&#?([0-9]{2,4}|[a-z]{1,10});)`i', [$this, '_decode_HTML5_UTF8'], $sString);
+	public function to_HTML5_UTF8(string $str): string
+	{
+		return (string) preg_replace_callback('`(&#?([0-9]{2,4}|[a-z]{1,10});)`i', [$this, '_decode_HTML5_UTF8'], $str);
 	}
 	private function _decode_HTML5_UTF8($aPregReplaceArray) {
 		if(empty($aPregReplaceArray[0])) { return ''; }
@@ -754,101 +753,105 @@ class Slugify {
 	/**
 	 * DECODE SPACES
 	 *
-	 * @param string $sString
+	 * @param string $str
 	 * @return string
 	 */
-	public function decodeSpaces($sString) {
-		return str_replace(array_keys($this->_aSpaces), $this->_aSpaces, $sString);
+	public function decodeSpaces(string $str): string
+	{
+		return str_replace(array_keys($this->_aSpaces), $this->_aSpaces, $str);
 	}
-	
+
 	/**
 	 * REDECODE SPACES
 	 *
-	 * @param string $sString
+	 * @param string $str
 	 * @return string
 	 */
-	public function encodeSpaces($sString) {
-		$aSpaceEntities = array_keys($this->_aSpaces);
-		foreach ($aSpaceEntities as $sSpace) {
-			$sString = str_replace(html_entity_decode($sSpace, null, 'utf-8'), $sSpace, $sString);
+	public function encodeSpaces(string $str): string
+	{
+		foreach (array_keys($this->_aSpaces) as $sSpace) {
+			$str = str_replace(html_entity_decode($sSpace, null, 'utf-8'), $sSpace, $str);
 		}
-		return $sString;
+		return $str;
 	}
 
 	/**
 	 * SANITIZE STRING
 	 * for title, subtitle, or other one line strings
 	 *
-	 * @param string $sString
+	 * @param string $str
 	 * @return string
 	 */
-	public function sanitizeOneLineStrings($sString) {
-		$sString = $this->decodeSpaces($sString);
-		$sString = preg_replace('`<br>|<br >|<br/>|<br />|</br>`i', ' ', $sString);
-		$sString = strip_tags($sString);
-		while (strpos($sString, '  ') !== false) { $sString = str_replace('  ', ' ', $sString); }
-		return $sString;
+	public function sanitizeOneLineStrings(string $str): string
+	{
+		$str = $this->decodeSpaces($str);
+		$str = preg_replace('`<br>|<br >|<br/>|<br />|</br>`i', ' ', $str);
+		$str = strip_tags($str);
+		while (strpos($str, '  ') !== false) { $str = str_replace('  ', ' ', $str); }
+		return $str;
 	}
 
 	/**
 	 * Delete Accents
 	 *
-	 * @param string $sString
+	 * @param string $str
 	 * @return string
 	 */
-	public function removeAccent($sString) {
-		return str_replace($this->a, $this->b, $sString);
+	public function removeAccent(string $str): string
+	{
+		return str_replace($this->a, $this->b, $str);
 	}
 
 	/**
 	 * Cleans Characters (for example : write url)
 	 *
-	 * @param string $sString
+	 * @param string $str
+	 * @param string $glue [optional]
 	 * @return string
 	 */
-	public function clean($sString) {
-		$sString = $this->removeAccent($sString);
-		$sString = strtolower($sString);
-		$sString = strip_tags($sString);
-		$sString = str_replace('&nbsp;', ' ', $sString);
-		$sString = str_replace('&thinsp;', ' ', $sString);
-		$sString = str_replace('&#8239;', ' ', $sString);
-		$sString = preg_replace( '#[^0-9a-z]+#i', '-', $sString ) ;
+	public function clean(string $str, string $glue = '-'): string
+	{
+		# Remove html entities and html tags
+		$str = html_entity_decode($str, null, 'utf-8');
+		$str = preg_replace('`(&#?([0-9]{2,4}|[a-z]{1,10});)`i', $glue, $str);
+		$str = strip_tags($str);
 
-		while( strpos( $sString, '--' ) !== false ) { $sString = str_replace( '--', '-', $sString ); }
+		# Remove accent and to lower string
+		$str = $this->removeAccent($str);
+		$str = strtolower($str);
 
-		$sString = trim( $sString, '-' ) ;
-		$sString = strtolower( $sString ) ;
-		return $sString ;
+		# Delete all special chars remaining
+		$str = preg_replace('#[^0-9a-z]+#i', $glue, $str) ;
+
+		# Delete duplicates / and start-end
+		while(strpos($str, $glue.$glue) !== false) { $str = str_replace($glue.$glue, $glue, $str); }
+		$str = trim($str, $glue) ;
+
+		return $str ;
 	}
 
 	/**
 	 * FAT TRIM
 	 *
-	 * @param string $sString
-	 * @return mixed|string
+	 * @param string $str
+	 * @return string
 	 */
-	public function trim($sString) {
-		$sString = $this->removeAccent($sString);
-		$sString = strtolower($sString);
-		$sString = strip_tags($sString);
-		$sString = str_replace('&nbsp;', '', $sString);
-		$sString = str_replace('&thinsp;', '', $sString);
-		$sString = str_replace('&#8239;', '', $sString);
-		$sString = preg_replace('#[^0-9a-z]+#i', '', $sString);
-		return $sString ;
+	public function trim(string $str): string
+	{
+		return $this->clean($str, ' ');
 	}
 
 	/**
 	 * Detecting a valid name or first name internationnal
 	 *
-	 * @param string $sName
+	 * @param string $name
 	 * @return bool
 	 */
-	public function pregName($sName) {
-		$sAccep = '';
-		foreach(array_merge($this->a, $this->_aApostrophes) as $sAcceptLetter) { $sAccep .= $sAcceptLetter; }
-		return preg_match('#^[a-zA-Z'.$sAccep.'\- ]+$#', $sName);
+	public function pregName(string $name): bool
+	{
+		$accep = '';
+		foreach(array_merge($this->a, $this->_aApostrophes) as $item) { $accep .= $item; }
+		return preg_match('#^[a-zA-Z'.$accep.'\- ]+$#', $name);
 	}
 
 	/**
@@ -876,10 +879,13 @@ class Slugify {
 
 		return $text;
 	}
-	
+
 	/**
 	 * Clean string for sql search optimisation
 	 *
+	 * @param string $str
+	 * @param string $decode [optional]
+	 * @param string $charset [optional]
 	 * @return string
 	 */
 	public function searchSqlCleaner(string $str, string $decode = ENT_HTML5, string $charset = 'UTF-8'): string
