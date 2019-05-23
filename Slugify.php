@@ -840,6 +840,36 @@ class Slugify {
 	{
 		return $this->clean($str, ' ');
 	}
+	
+	/**
+	 * Strip tags with their content
+	 * (and can revert the allowabled tags)
+	 *
+	 * @author Mariusz Tarnaski <mariusz.tarnaski@wp.pl>
+	 * @link https://www.php.net/manual/fr/function.strip-tags.php#86964
+	 *
+	 * @param string $str | The html to process
+	 * @param string $tags | The tags list to allow or disallow
+	 * @param bool $invert | You can revert the allow tags list in disallow list
+	 * @return string
+	 */
+	public function strip(string $str, string $tags = '', bool $invert = false): string
+	{
+		preg_match_all('`<(.+?)[\s]*/?[\s]*>`si', trim($tags), $matches);
+		$tags = array_unique($matches[1] ?? []);
+		if($tags) {
+			if(!$invert) {
+				return preg_replace('`<(?!(?:'. implode('|', $tags) .')\b)(\w+)\b.*?>.*?</\1>`si', '', $str);
+			}
+			else {
+				return preg_replace('`<('. implode('|', $tags) .')\b.*?>.*?</\1>`si', '', $str);
+			}
+		}
+		elseif(!$invert) {
+			return preg_replace('`<(\w+)\b.*?>.*?</\1>`si', '', $str);
+		}
+		return $str;
+	}
 
 	/**
 	 * Detecting a valid name or first name internationnal
