@@ -920,26 +920,25 @@ class Slugify {
 	 */
 	public function searchSqlCleaner(string $str, string $decode = ENT_HTML5, string $charset = 'UTF-8'): string
 	{
-		# Décodage des entités HTML
+		# HTML decode and remove tags
 		$str = html_entity_decode($str, $decode, $charset);
-
-		# Suppression des tags HTML
 		$str = trim(strip_tags($str));
 
-		# Tout ce qui ressemble à une apostrophe en simple quote
+		# All apos chars in simple quote
 		$apos = '\\' . implode('|\\', $this->_aApostrophes);
 		$str = preg_replace("`$apos`", "'", $str);
 
-		# On ne garde que les caractères de l'alphabet et les chiffres + lettre accentuées et simple quote
+		# Delete all remains encoded and remove all accent chars
+		$str = preg_replace('`(&#?([0-9]{2,4}|[a-z]{1,10});)`i', '', $str);
+		$str = str_replace($this->a, $this->b, $str);
+
+		# Retains only alphabet chars, number, and simple quote
 		mb_internal_encoding($charset);
 		mb_regex_encoding($charset);
-		$str = mb_eregi_replace( '[^a-z0-9'.implode('', $this->a).'\']+', ' ', $str ) ;
+		$str = mb_eregi_replace('[^a-z0-9\' ]+', ' ', $str) ;
 
-		# Suppression espaces parasites
+		# Delete parasitics whitespaces
 		while (strpos($str, '  ') !== false) { $str = str_replace('  ', ' ', $str); }
-		$str = trim($str);
-
-		# Cleaned
-		return $str;
+		return trim($str);
 	}
 }
