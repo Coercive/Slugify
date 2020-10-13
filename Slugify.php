@@ -824,7 +824,9 @@ class Slugify {
 		$str = preg_replace('#[^0-9a-z]+#i', $glue, $str) ;
 
 		# Delete duplicates / and start-end
-		while(strpos($str, $glue.$glue) !== false) { $str = str_replace($glue.$glue, $glue, $str); }
+		if($glue) {
+			while(strpos($str, $glue.$glue) !== false) { $str = str_replace($glue.$glue, $glue, $str); }
+		}
 		$str = trim($str, $glue) ;
 
 		return $str ;
