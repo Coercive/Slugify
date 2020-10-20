@@ -934,10 +934,13 @@ class Slugify {
 		$str = preg_replace('`(&#?([0-9]{2,4}|[a-z]{1,10});)`i', '', $str);
 		$str = str_replace($this->a, $this->b, $str);
 
-		# Retains only alphabet chars, number, and simple quote
+		# Retains only alphabet chars, number, tiret and simple quote
 		mb_internal_encoding($charset);
 		mb_regex_encoding($charset);
-		$str = mb_eregi_replace('[^a-z0-9\' ]+', ' ', $str) ;
+		$str = mb_eregi_replace('[^a-z0-9\' -]+', ' ', $str) ;
+
+		# Delete tirets (OCR breakwords)
+		$str = str_replace('-', '', $str);
 
 		# Delete parasitics whitespaces
 		while (strpos($str, '  ') !== false) { $str = str_replace('  ', ' ', $str); }
