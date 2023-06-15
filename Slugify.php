@@ -776,6 +776,58 @@ class Slugify {
 	}
 
 	/**
+	 * UTF-8 UCFirst
+	 *
+	 * @param string $str
+	 * @return string
+	 */
+	public function ucfirst(string $str): string
+	{
+		return mb_strtoupper( mb_substr( $str, 0, 1 )) . mb_substr( $str, 1 );
+	}
+
+	/**
+	 * Capitalize title
+	 *
+	 * @param string $str
+	 * @return string
+	 */
+	public function caseTitle(string $str): string
+	{
+		return mb_convert_case($str, MB_CASE_TITLE, 'UTF-8');
+	}
+
+	/**
+	 * Capitalize name
+	 *
+	 * @param string $str
+	 * @return string
+	 */
+	public function capitalize(string $str): string
+	{
+		$str = mb_strtolower($str);
+		$chars = mb_str_split($str);
+		$alpha = array_merge(range('a', 'z'), $this->a, $this->b);
+
+		$full = '';
+		$ucfirst = false;
+		foreach($chars as $char) {
+			$allowed = in_array($char, $alpha, true);
+			if(!$ucfirst && $allowed) {
+				$char = mb_strtoupper($char);
+				$ucfirst = true;
+			}
+
+			if(!$allowed) {
+				$ucfirst = false;
+			}
+
+			$full .= $char;
+		}
+		return $full;
+	}
+
+	/**
 	 * SANITIZE STRING
 	 * for title, subtitle, or other one line strings
 	 *
