@@ -998,4 +998,32 @@ class Slugify {
 		while (strpos($str, '  ') !== false) { $str = str_replace('  ', ' ', $str); }
 		return trim($str);
 	}
+
+	/**
+	 * Camel Case a string, remove all that is not a-z 0-9
+	 *
+	 * @param string $str
+	 * @param bool $pascal [optional] Switch to PascalCase mode
+	 * @return string
+	 */
+	public function camelCase(string $str, bool $pascal = false): string
+	{
+		$str = preg_replace('`[^a-z\d+]`', ' ', strtolower($str));
+		$str = ucwords($str, ' ');
+		$str = str_replace(' ', '', $str);
+		if(!$pascal) {
+			$str = lcfirst($str);
+		}
+		return $str;
+	}
+
+	/**
+	 * @alias self::camelCase
+	 * @param string $str
+	 * @return string
+	 */
+	public function pascalCase(string $str): string
+	{
+		return $this->camelCase($str, true);
+	}
 }
