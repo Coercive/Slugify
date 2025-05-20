@@ -1215,16 +1215,16 @@ class Slugify
 	 * Strip tags with their content
 	 * (and can revert the allowabled tags)
 	 *
-	 * @author Mariusz Tarnaski <mariusz.tarnaski@wp.pl>
-	 * @link https://www.php.net/manual/fr/function.strip-tags.php#86964
-	 *
 	 * @param string $str | The html to process
 	 * @param string $tags | The tags list to allow or disallow
-	 * @param bool $invert | You can revert the allow tags list in disallow list
+	 * @param bool $disallow | You can revert the allow tags list in disallow list
 	 * @param bool $keep | Keep the content inside the tag
 	 * @return string
+	 *
+	 * @link https://www.php.net/manual/fr/function.strip-tags.php#86964
+	 * @author Mariusz Tarnaski <mariusz.tarnaski@wp.pl>
 	 */
-	public function strip(string $str, string $tags = '', bool $invert = false, bool $keep = false): string
+	public function strip(string $str, string $tags = '', bool $disallow = false, bool $keep = false): string
 	{
 		$replacement = function ($matches) use ($keep) {
 			return $keep ? $matches['x'] : '';
@@ -1232,14 +1232,16 @@ class Slugify
 		preg_match_all('`<(.+?)[\s]*/?[\s]*>`si', trim($tags), $matches);
 		$tags = array_unique($matches[1] ?? []);
 		if($tags) {
-			if(!$invert) {
-				return preg_replace_callback('`<(?!(?:'. implode('|', $tags) .')\b)(\w+)\b.*?>(?<x>.*?)</\1>`si', $replacement, $str);
+			if(!$disallow) {
+				$str = preg_replace_callback('`<(?!(?:'. implode('|', $tags) .')\b)(\w+)\b.*?>(?<x>.*?)</\1>`si', $replacement, $str);
+				return preg_replace('`</?(?!(?:' . implode('|', $tags) . ')\b)(?:\w+)*\b.*?>`si', '', $str);
 			}
 			else {
-				return preg_replace_callback('`<('. implode('|', $tags) .')\b.*?>(?<x>.*?)</\1>`si', $replacement, $str);
+				$str = preg_replace_callback('`<('. implode('|', $tags) .')\b.*?>(?<x>.*?)</\1>`si', $replacement, $str);
+				return preg_replace('`</?(?:' . implode('|', $tags) . ')\b(?:\w+)*\b.*?>`si', '', $str);
 			}
 		}
-		elseif(!$invert) {
+		elseif(!$disallow) {
 			return preg_replace_callback('`<(\w+)\b.*?>(?<x>.*?)</\1>`si', $replacement, $str);
 		}
 		return $str;
