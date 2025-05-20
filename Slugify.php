@@ -1210,7 +1210,7 @@ class Slugify
 	{
 		return $this->clean($str, ' ');
 	}
-	
+
 	/**
 	 * Strip tags with their content
 	 * (and can revert the allowabled tags)
@@ -1221,22 +1221,26 @@ class Slugify
 	 * @param string $str | The html to process
 	 * @param string $tags | The tags list to allow or disallow
 	 * @param bool $invert | You can revert the allow tags list in disallow list
+	 * @param bool $keep | Keep the content inside the tag
 	 * @return string
 	 */
-	public function strip(string $str, string $tags = '', bool $invert = false): string
+	public function strip(string $str, string $tags = '', bool $invert = false, bool $keep = false): string
 	{
+		$replacement = function ($matches) use ($keep) {
+			return $keep ? $matches['x'] : '';
+		};
 		preg_match_all('`<(.+?)[\s]*/?[\s]*>`si', trim($tags), $matches);
 		$tags = array_unique($matches[1] ?? []);
 		if($tags) {
 			if(!$invert) {
-				return preg_replace('`<(?!(?:'. implode('|', $tags) .')\b)(\w+)\b.*?>.*?</\1>`si', '', $str);
+				return preg_replace_callback('`<(?!(?:'. implode('|', $tags) .')\b)(\w+)\b.*?>(?<x>.*?)</\1>`si', $replacement, $str);
 			}
 			else {
-				return preg_replace('`<('. implode('|', $tags) .')\b.*?>.*?</\1>`si', '', $str);
+				return preg_replace_callback('`<('. implode('|', $tags) .')\b.*?>(?<x>.*?)</\1>`si', $replacement, $str);
 			}
 		}
 		elseif(!$invert) {
-			return preg_replace('`<(\w+)\b.*?>.*?</\1>`si', '', $str);
+			return preg_replace_callback('`<(\w+)\b.*?>(?<x>.*?)</\1>`si', $replacement, $str);
 		}
 		return $str;
 	}
