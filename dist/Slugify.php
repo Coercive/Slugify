@@ -1,20 +1,24 @@
 <?php
 namespace Coercive\Utility\Slugify;
 
+use DOMDocument;
+use DOMElement;
+use DOMException;
+use DOMXPath;
+
 /**
  * Slugify
  *
- * @package 	Coercive\Utility\Slugify
- * @link		https://github.com/Coercive/Slugify
+ * @package Coercive\Utility\Slugify
+ * @link https://github.com/Coercive/Slugify
  *
- * @author  	Anthony Moral <contact@coercive.fr>
- * @copyright   © 2019 Anthony Moral
- * @license 	MIT
+ * @author Anthony Moral <contact@coercive.fr>
+ * @copyright © 2025 Anthony Moral
+ * @license MIT
  */
 class Slugify
 {
-	/** @var array Original chars => decoded chars */
-	private array $map = [
+	const ALPHABET_MAP = [
 		'À' => 'A',
 		'Á' => 'A',
 		'Â' => 'A',
@@ -44,7 +48,8 @@ class Slugify
 		'Û' => 'U',
 		'Ü' => 'U',
 		'Ý' => 'Y',
-		'ß' => 's',
+		'ẞ' => 'SS',
+		'ß' => 'ss',
 		'à' => 'a',
 		'á' => 'a',
 		'â' => 'a',
@@ -138,7 +143,7 @@ class Slugify
 		'ľ' => 'l',
 		'Ŀ' => 'L',
 		'ŀ' => 'l',
-		'Ł' => 'l',
+		'Ł' => 'L',
 		'ł' => 'l',
 		'Ń' => 'N',
 		'ń' => 'n',
@@ -332,10 +337,150 @@ class Slugify
 		'ѳ' => 'f',
 		'Ѵ' => 'Y',
 		'ѵ' => 'y',
+
+		# Greek alphabet
+
+		# Common Greek Combinations
+		'γγ' => 'ng', 'Γγ' => 'Ng', 'ΓΓ' => 'NG',
+		'γκ' => 'gk', 'Γκ' => 'Gk', 'ΓΚ' => 'GK',
+		'γχ' => 'nch', 'Γχ' => 'Nch', 'ΓΧ' => 'NCH',
+
+		'α' => 'a',
+		'ά' => 'a',
+		'ὰ' => 'a',
+		'ἀ' => 'a',
+		'ἄ' => 'a',
+		'ἂ' => 'a',
+		'ἆ' => 'a',
+		'ἁ' => 'a',
+		'ἅ' => 'a',
+		'ἃ' => 'a',
+		'ἇ' => 'a',
+		'β' => 'v',
+		'γ' => 'g',
+		'δ' => 'd',
+		'ε' => 'e',
+		'έ' => 'e',
+		'ὲ' => 'e',
+		'ἐ' => 'e',
+		'ἔ' => 'e',
+		'ἒ' => 'e',
+		'ἑ' => 'e',
+		'ἕ' => 'e',
+		'ἓ' => 'e',
+		'ζ' => 'z',
+		'η' => 'i',
+		'ή' => 'i',
+		'ὴ' => 'i',
+		'ἠ' => 'i',
+		'ἤ' => 'i',
+		'ἢ' => 'i',
+		'ἦ' => 'i',
+		'ἡ' => 'i',
+		'ἥ' => 'i',
+		'ἣ' => 'i',
+		'ἧ' => 'i',
+		'θ' => 'th',
+		'ι' => 'i',
+		'ί' => 'i',
+		'ὶ' => 'i',
+		'ῖ' => 'i',
+		'ἰ' => 'i',
+		'ἴ' => 'i',
+		'ἲ' => 'i',
+		'ἶ' => 'i',
+		'ἱ' => 'i',
+		'ἵ' => 'i',
+		'ἳ' => 'i',
+		'ἷ' => 'i',
+		'ϊ' => 'i',
+		'ΐ' => 'i',
+		'κ' => 'k',
+		'λ' => 'l',
+		'μ' => 'm',
+		'ν' => 'n',
+		'ξ' => 'x',
+		'ο' => 'o',
+		'ό' => 'o',
+		'ὸ' => 'o',
+		'ὀ' => 'o',
+		'ὄ' => 'o',
+		'ὂ' => 'o',
+		'ὁ' => 'o',
+		'ὅ' => 'o',
+		'ὃ' => 'o',
+		'π' => 'p',
+		'ρ' => 'r',
+		'ῤ' => 'r',
+		'ῥ' => 'r',
+		'σ' => 's',
+		'ς' => 's',
+		'τ' => 't',
+		'υ' => 'y',
+		'ύ' => 'y',
+		'ὺ' => 'y',
+		'ῦ' => 'y',
+		'ὐ' => 'y',
+		'ὔ' => 'y',
+		'ὒ' => 'y',
+		'ὖ' => 'y',
+		'ὑ' => 'y',
+		'ὕ' => 'y',
+		'ὓ' => 'y',
+		'ὗ' => 'y',
+		'ϋ' => 'y',
+		'ΰ' => 'y',
+		'φ' => 'f',
+		'χ' => 'ch',
+		'ψ' => 'ps',
+		'ω' => 'o',
+		'ώ' => 'o',
+		'ὼ' => 'o',
+		'ὠ' => 'o',
+		'ὤ' => 'o',
+		'ὢ' => 'o',
+		'ὦ' => 'o',
+		'ὡ' => 'o',
+		'ὥ' => 'o',
+		'ὣ' => 'o',
+		'ὧ' => 'o',
+		'Α' => 'A',
+		'Ά' => 'A',
+		'Β' => 'V',
+		'Γ' => 'G',
+		'Δ' => 'D',
+		'Ε' => 'E',
+		'Έ' => 'E',
+		'Ζ' => 'Z',
+		'Η' => 'I',
+		'Ή' => 'I',
+		'Θ' => 'Th',
+		'Ι' => 'I',
+		'Ί' => 'I',
+		'Ϊ' => 'I',
+		'Κ' => 'K',
+		'Λ' => 'L',
+		'Μ' => 'M',
+		'Ν' => 'N',
+		'Ξ' => 'X',
+		'Ο' => 'O',
+		'Ό' => 'O',
+		'Π' => 'P',
+		'Ρ' => 'R',
+		'Σ' => 'S',
+		'Τ' => 'T',
+		'Υ' => 'Y',
+		'Ύ' => 'Y',
+		'Ϋ' => 'Y',
+		'Φ' => 'F',
+		'Χ' => 'Ch',
+		'Ψ' => 'Ps',
+		'Ω' => 'O',
+		'Ώ' => 'O',
 	];
 
 	/** @var array ENTITY / DECODE */
-	private $_aHtmlEntities = [
+	private array $_aHtmlEntities = [
 		'&quot;' => '"',
 		'&amp;' => '&',
 		'&euro;' => '€',
@@ -701,6 +846,7 @@ class Slugify
 		'&#221;' => 'Ý',
 		'&#222;' => 'Þ',
 		'&#223;' => 'ß',
+		'&#7838;' => 'ẞ',
 		'&#224;' => 'à',
 		'&#225;' => 'á',
 		'&#226;' => 'â',
@@ -736,22 +882,7 @@ class Slugify
 		'&#9679;' => '●',
 		'&#8226;' => '•',
 	];
-	private $_aSpaces = [
-		'&nbsp;' => ' ', # insecable
-		'&#160;' => ' ', # insecable
-		'&ensp;' => ' ', # 2 spaces
-		'&emsp;' => ' ', # 4 spaces
-		'&thinsp;' => ' ', # fine space
-		'&#8239;' => ' ', # insecable fine space
-	];
-	private $_aApostrophes = [
-		'&apos;'  => '\'',
-		'&lsquo;' => '‘',
-		'&rsquo;' => '’',
-		'&sbquo;' => '‚',
-		'&acute;' => '´',
-		'&#96;'   => '`',
-	];
+
 	/**
 	 * @link https://stackoverflow.com/questions/11176752/converting-named-html-entities-to-numeric-html-entities
 	 */
@@ -1012,23 +1143,97 @@ class Slugify
 	];
 
 	/**
-	 * CONVERT HTML NAMED ENTITIES TO XML NUMERICAL ENTITIES
+	 * Converts named HTML entities to XML numeric entities (decimal).
 	 *
-	 * @param string $str
-	 * @return string
+	 * @param string $str The string to convert.
+	 * @param bool $unescape If true, unescape entities before conversion.
+	 * @return string The string with the entities converted to numeric format.
 	 */
-	public function convertToNumericEntities(string $str): string
+	public function convertToNumericEntities(string $str, bool $unescape = false): string
 	{
-		return strtr($str, $this->_namedToNumeric);
+		$escapedEntitiesToRestore = [];
+
+		if ($unescape) {
+			$str = html_entity_decode($str, ENT_NOQUOTES | ENT_HTML5, 'UTF-8');
+
+			# Convert non-ASCII characters (like € or non-breaking space) to decimal.
+			$str = mb_encode_numericentity($str, [0xA0, 0xffff, 0, 0xffff], 'UTF-8');
+
+			# Convert reserved ASCII characters (< and >) that are not entities.
+			$str = str_replace(
+				['<', '>'],
+				['&#60;', '&#62;'],
+				$str
+			);
+		}
+		else {
+			# Hides escapes to be preserved (eg: &amp;nbsp; MUST remain &amp;nbsp;)
+			$str = preg_replace_callback(
+				'/(&amp;(?:nbsp|lt|gt|quot|apos|copy);)/i',
+				function (array $matches) use (&$escapedEntitiesToRestore) {
+					$token = '__ESCAPED_PRESERVED_' . mb_strtoupper(md5($matches[0])) . '__';
+					$escapedEntitiesToRestore[$token] = $matches[0];
+					return $token;
+				},
+				$str
+			);
+		}
+
+		# Converting remaining named entities (including &amp; and &NBSP;)
+		$converted_str = preg_replace_callback(
+			'/&([a-zA-Z][a-zA-Z0-9]*|#[0-9]+|#x[0-9a-fA-F]+);/i',
+			function (array $matches): string {
+				$entity = $matches[0];
+
+				# Numeric entities (&#...; or &#x...;): Returned intact.
+				if (str_starts_with($entity, '&#')) {
+					return $entity;
+				}
+
+				# Case correction: Force entity to lowercase for decoding
+				$target_entity = strtolower($entity);
+
+				# Decodes the named entity into a real character (Ex: &amp; -> &, &nbsp; -> U+00A0)
+				$decoded = html_entity_decode($target_entity, ENT_NOQUOTES | ENT_HTML5, 'UTF-8');
+
+				if (mb_strlen($decoded, 'UTF-8') === 1 && $decoded !== $target_entity) {
+					$ord = mb_ord($decoded, 'UTF-8');
+					return '&#' . $ord . ';';
+				}
+				return $matches[0];
+			},
+			$str
+		);
+
+		# Restoration of masked escapes
+		if (!$unescape && $escapedEntitiesToRestore) {
+			$converted_str = str_replace(array_keys($escapedEntitiesToRestore), array_values($escapedEntitiesToRestore), $converted_str);
+		}
+		return $converted_str;
 	}
 
 	/**
-	 * CONVERT NUMERICAL ENTITIES TO EQUIVALENT HTML NAMED ENTITIES
+	 * Convert numerical entities to equivalent html named entities
 	 *
 	 * @param string $str
 	 * @return string
 	 */
-	public function convertToNamedEntities(string $str): string
+	public function replaceHtmlEntitiesToUnicode(string $str): string
+	{
+		return preg_replace_callback('`&[a-z]+;`i', function ($matches) {
+			$entity = strtolower($matches[0]);
+			return $this->_namedToNumeric[$entity] ?? $matches[0];
+		}, $str);
+		//return strtr($str, $this->_namedToNumeric);
+	}
+
+	/**
+	 * Convert numerical entities to equivalent html named entities
+	 *
+	 * @param string $str
+	 * @return string
+	 */
+	public function replaceUnicodeToHtmlEntities(string $str): string
 	{
 		return strtr($str, array_flip($this->_namedToNumeric));
 	}
@@ -1054,41 +1259,39 @@ class Slugify
 	/**
 	 * AUTOMATIC HTML5 TO UTF8
 	 *
-	 * @param $str
+	 * @param string $str
 	 * @return string
 	 */
 	public function to_HTML5_UTF8(string $str): string
 	{
-		return (string) preg_replace_callback('`(&#?([0-9]{2,4}|[a-z]{1,10});)`i', [$this, '_decode_HTML5_UTF8'], $str);
-	}
-	private function _decode_HTML5_UTF8($aPregReplaceArray) {
-		if(empty($aPregReplaceArray[0])) { return ''; }
-		return html_entity_decode($aPregReplaceArray[0], ENT_QUOTES | ENT_HTML5);
+		return (string) preg_replace_callback('`(&#?([0-9]{2,4}|[a-z]{1,10});)`i', function ($matches) {
+			if(empty($matches[0])) {
+				return '';
+			}
+			return html_entity_decode($matches[0], ENT_QUOTES | ENT_HTML5);
+		}, $str);
 	}
 
 	/**
-	 * DECODE SPACES
+	 * Decode spaces
 	 *
 	 * @param string $str
 	 * @return string
 	 */
 	public function decodeSpaces(string $str): string
 	{
-		return str_replace(array_keys($this->_aSpaces), $this->_aSpaces, $str);
+		return Space::fix($str);
 	}
 
 	/**
-	 * REDECODE SPACES
+	 * Encode spaces
 	 *
 	 * @param string $str
 	 * @return string
 	 */
 	public function encodeSpaces(string $str): string
 	{
-		foreach (array_keys($this->_aSpaces) as $sSpace) {
-			$str = str_replace(html_entity_decode($sSpace, null, 'utf-8'), $sSpace, $str);
-		}
-		return $str;
+		return Space::fix($str, Space::HTML_ENTITY_NO_BREAK_SPACE);
 	}
 
 	/**
@@ -1123,7 +1326,7 @@ class Slugify
 	{
 		$str = mb_strtolower($str);
 		$chars = mb_str_split($str);
-		$alpha = array_merge(range('a', 'z'), array_keys($this->map));
+		$alpha = array_merge(range('a', 'z'), array_keys(self::ALPHABET_MAP));
 
 		$full = '';
 		$ucfirst = false;
@@ -1152,11 +1355,11 @@ class Slugify
 	 */
 	public function sanitizeOneLineStrings(string $str): string
 	{
-		$str = $this->decodeSpaces($str);
-		$str = preg_replace('`<br>|<br >|<br/>|<br />|</br>`i', ' ', $str);
+		$str = preg_replace('`<\s*br\s*/?\s*>`i', ' ', $str);
+		$str = preg_replace('/[\r\n\t]+/u', ' ', $str);
 		$str = strip_tags($str);
-		while (strpos($str, '  ') !== false) { $str = str_replace('  ', ' ', $str); }
-		return $str;
+		$str = Space::fix($str, Space::UTF8_REGULAR_SPACE);
+		return trim($str);
 	}
 
 	/**
@@ -1167,7 +1370,11 @@ class Slugify
 	 */
 	public function removeAccent(string $str): string
 	{
-		return str_replace(array_keys($this->map), $this->map, $str);
+		# Remove combining accents (U+0300 to U+036F)
+		$str = preg_replace('/[\x{0300}-\x{036F}]/u', '', $str);
+
+		# Replace special chars
+		return str_replace(array_keys(self::ALPHABET_MAP), self::ALPHABET_MAP, $str);
 	}
 
 	/**
@@ -1175,16 +1382,20 @@ class Slugify
 	 *
 	 * @param string $str
 	 * @param string $glue [optional]
+	 * @param bool $symbol [optional]
 	 * @return string
 	 */
-	public function clean(string $str, string $glue = '-'): string
+	public function clean(string $str, string $glue = '-', bool $symbol = false): string
 	{
 		# Remove html entities and html tags
-		$str = html_entity_decode($str, null, 'utf-8');
+		$str = html_entity_decode($str, ENT_QUOTES|ENT_SUBSTITUTE, 'utf-8');
 		$str = preg_replace('`(&#?([0-9]{2,4}|[a-z]{1,10});)`i', $glue, $str);
 		$str = strip_tags($str);
 
 		# Remove accent and to lower string
+		if($symbol) {
+			$str = Symbol::fix($str);
+		}
 		$str = $this->removeAccent($str);
 		$str = strtolower($str);
 
@@ -1193,11 +1404,11 @@ class Slugify
 
 		# Delete duplicates / and start-end
 		if($glue) {
-			while(strpos($str, $glue.$glue) !== false) { $str = str_replace($glue.$glue, $glue, $str); }
+			while(strpos($str, $glue.$glue) !== false) {
+				$str = str_replace($glue.$glue, $glue, $str);
+			}
 		}
-		$str = trim($str, $glue) ;
-
-		return $str ;
+		return trim($str, " \n\r\t\v\0$glue") ;
 	}
 
 	/**
@@ -1212,51 +1423,130 @@ class Slugify
 	}
 
 	/**
-	 * Strip tags with their content
-	 * (and can revert the allowabled tags)
+	 * Strip tags with their content (or keep content)
 	 *
-	 * @param string $str | The html to process
-	 * @param string $tags | The tags list to allow or disallow
-	 * @param bool $disallow | You can revert the allow tags list in disallow list
-	 * @param bool $keep | Keep the content inside the tag
-	 * @return string
-	 *
-	 * @link https://www.php.net/manual/fr/function.strip-tags.php#86964
-	 * @author Mariusz Tarnaski <mariusz.tarnaski@wp.pl>
+	 * @param string $str The html to process
+	 * @param string $tags [optional] Tags list to allow or disallow (e.g. '<b><i>' or 'b,i' or 'b i')
+	 * @param bool $disallow [optional] If true, $tags is a list of tags TO REMOVE; if false, $tags is a list of tags TO KEEP.
+	 * @param bool $keep If true, keep the inner content of removed nodes; if false, remove node and its children.
+	 * @return string Cleaned HTML/text
+	 * @throws DOMException
 	 */
 	public function strip(string $str, string $tags = '', bool $disallow = false, bool $keep = false): string
 	{
-		$replacement = function ($matches) use ($keep) {
-			return $keep ? $matches['x'] : '';
-		};
-		preg_match_all('`<(.+?)[\s]*/?[\s]*>`si', trim($tags), $matches);
-		$tags = array_unique($matches[1] ?? []);
-		if($tags) {
-			if(!$disallow) {
-				$str = preg_replace_callback('`<(?!(?:'. implode('|', $tags) .')\b)(\w+)\b.*?>(?<x>.*?)</\1>`si', $replacement, $str);
-				return preg_replace('`</?(?!(?:' . implode('|', $tags) . ')\b)(?:\w+)*\b.*?>`si', '', $str);
+		if (!trim($str)) {
+			return $str;
+		}
+
+		# Build canonical tag list (lowercase).
+		$tagsList = [];
+		$tagsTrim = trim($tags);
+		if ($tagsTrim !== '') {
+			# Support "<b><i>".
+			if (preg_match_all('/<\s*([a-z0-9]+)\s*>/i', $tagsTrim, $m)) {
+				$tagsList = $m[1];
+			}
+			# Support "b,i" or "b i".
+			else {
+				$parts = preg_split('/[,\s]+/', $tagsTrim);
+				$tagsList = array_filter($parts, fn($p) => $p !== '');
+			}
+			$tagsList = array_map('strtolower', $tagsList);
+		}
+
+		# Silence libxml warnings
+		$useInternal = libxml_use_internal_errors(true);
+
+		$dom = new DOMDocument('1.0', 'UTF-8');
+
+		# Wrap into a known container to preserve top-level text nodes and avoid losing text.
+		$wrapperId = uniqid('slugify_wrapper_');
+		$wrapped = '<div id="' . $wrapperId . '">' . $str . '</div>';
+
+		# Load HTML fragment.
+		# We prefix with an XML encoding hint so DOMDocument recognizes UTF-8 reliably,
+		@$dom->loadHTML('<?xml encoding="utf-8"?>' . $wrapped, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+
+		# Find the wrapper node
+		$wrapper = $dom->getElementById($wrapperId);
+		if (!$wrapper) {
+			# fallback: create a wrapper element manually if not found
+			$wrapper = $dom->createElement('div');
+			while ($dom->firstChild) {
+				$wrapper->appendChild($dom->firstChild);
+			}
+			$dom->appendChild($wrapper);
+		}
+
+		# Collect descendant elements in an array (deepest first)
+		$nodes = [];
+		$xpath = new DOMXPath($dom);
+		foreach ($xpath->query('.//*', $wrapper) as $n) {
+			$nodes[] = $n;
+		}
+
+		# Iterate from deepest to root to avoid issues when removing nodes
+		for ($i = count($nodes) - 1; $i >= 0; $i--) {
+			$node = $nodes[$i];
+			if (!$node instanceof DOMElement) {
+				continue;
+			}
+
+			# Determine whether to remove this tag according to tagsList/disallow rules
+			$tag = strtolower($node->nodeName);
+			$isListed = in_array($tag, $tagsList, true);
+			# No list provided:
+			if (!$tagsList) {
+				$shouldRemove = !$disallow;
 			}
 			else {
-				$str = preg_replace_callback('`<('. implode('|', $tags) .')\b.*?>(?<x>.*?)</\1>`si', $replacement, $str);
-				return preg_replace('`</?(?:' . implode('|', $tags) . ')\b(?:\w+)*\b.*?>`si', '', $str);
+				$shouldRemove = $disallow ? $isListed : !$isListed;
 			}
+			if (!$shouldRemove) {
+				continue;
+			}
+
+			# Nothing to do if orphan
+			if (!$parent = $node->parentNode) {
+				continue;
+			}
+
+			# Insert before the node; this moves the node from its current parent
+			if ($keep) {
+				$children = [];
+				foreach ($node->childNodes as $c) {
+					$children[] = $c;
+				}
+				foreach ($children as $child) {
+					$parent->insertBefore($child, $node);
+				}
+			}
+
+			# Remove node
+			$parent->removeChild($node);
 		}
-		elseif(!$disallow) {
-			return preg_replace_callback('`<(\w+)\b.*?>(?<x>.*?)</\1>`si', $replacement, $str);
+
+		# Extract inner HTML of the wrapper (concatenate children)
+		$result = '';
+		foreach ($wrapper->childNodes as $child) {
+			$result .= $dom->saveHTML($child);
 		}
-		return $str;
+		# Restore libxml error handling state
+		libxml_clear_errors();
+		libxml_use_internal_errors($useInternal);
+
+		return $result;
 	}
 
 	/**
-	 * Detecting a valid name or first name internationnal
+	 * Detecting a valid name or first name international
 	 *
 	 * @param string $name
 	 * @return bool
 	 */
 	public function pregName(string $name): bool
 	{
-		$accep = implode('', array_merge(array_keys($this->map), $this->_aApostrophes));
-		return preg_match('#^[a-zA-Z'.$accep.'\- ]+$#', $name);
+		return (bool) preg_match('/^\p{L}+(?:[\'’‘´`\- ]\p{L}+)*$/u', $name);
 	}
 
 	/**
@@ -1264,44 +1554,50 @@ class Slugify
 	 *
 	 * @param string $text
 	 * @param int $length
-	 * @param string $decode [optional]
+	 * @param int $decode [optional]
 	 * @param string $charset [optional]
 	 * @return string
 	 */
-	public function substrText(string $text, int $length = 300, string $decode = ENT_HTML5, string $charset = 'UTF-8'): string
+	public function substrText(string $text, int $length = 300, int $decode = ENT_HTML5, string $charset = 'UTF-8'): string
 	{
 		# Convert chars
 		$text = html_entity_decode($text, $decode, $charset);
-		$text = $this->decodeSpaces($text);
+		$text = Space::fix($text, Space::UTF8_REGULAR_SPACE);
 		$text = trim(strip_tags($text));
-		if (!$text) { return ''; }
+		if (!$text) {
+			return '';
+		}
 
-		# Extract
-		if(strlen($text) < $length) { $length = strlen($text); }
-		$length = strpos($text, ' ', $length);
-		if($length === false) { $length = strlen($text); }
-		$text = substr($text, 0, $length);
+		# Shorten than given length
+		if(mb_strlen($text) < $length) {
+			return $text;
+		}
 
-		return $text;
+		# Extract to next space or exact length
+		if(false !== $pos = mb_strpos($text, ' ', $length)) {
+			$length = $pos;
+		}
+		return mb_substr($text, 0, $length);
 	}
 
 	/**
 	 * Clean string for sql search optimisation
 	 *
 	 * @param string $str
-	 * @param string $decode [optional]
+	 * @param int $decode [optional]
 	 * @param string $charset [optional]
 	 * @return string
 	 */
-	public function searchSqlCleaner(string $str, string $decode = ENT_HTML5, string $charset = 'UTF-8'): string
+	public function searchSqlCleaner(string $str, int $decode = ENT_HTML5, string $charset = 'UTF-8'): string
 	{
 		# HTML decode and remove tags
 		$str = html_entity_decode($str, $decode, $charset);
 		$str = trim(strip_tags($str));
 
-		# All apos chars in simple quote
-		$apos = '\\' . implode('|\\', $this->_aApostrophes);
-		$str = preg_replace("`$apos`", "'", $str);
+		# Some texts may use accent marks instead of proper apostrophes.
+		# For consistency in SQL search normalization, these characters are converted to a simple apostrophe `'`.
+		# This ensures that names like “D´Angelo” or “D`Angelo” are treated as “D'Angelo”.
+		$str = Apostrophe::fix($str);
 
 		# Delete all remains encoded and remove all accent chars
 		$str = preg_replace('`(&#?([0-9]{2,4}|[a-z]{1,10});)`i', '', $str);
@@ -1316,8 +1612,7 @@ class Slugify
 		$str = str_replace('-', '', $str);
 
 		# Delete parasitics whitespaces
-		while (strpos($str, '  ') !== false) { $str = str_replace('  ', ' ', $str); }
-		return trim($str);
+		return Space::fix($str, ' ');
 	}
 
 	/**
@@ -1329,7 +1624,7 @@ class Slugify
 	 */
 	public function camelCase(string $str, bool $pascal = false): string
 	{
-		$str = preg_replace('`[^a-z\d+]`', ' ', strtolower($str));
+		$str = $this->clean($str, ' ');
 		$str = ucwords($str, ' ');
 		$str = str_replace(' ', '', $str);
 		if(!$pascal) {
