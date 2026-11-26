@@ -31,6 +31,29 @@ $sSummary = (new Slugify)->substrText($sText, 500);
 # GIVE : 500chars text
 ```
 
+**BALANCE INLINE TAGS**
+
+Repairs badly closed inline formatting tags (`b`, `i`, `u`, `s`, `strong`, `em`, `small`, `mark`, `sup`, `sub`) that would turn the rest of the page bold / italic: truncated excerpts, old imports, orphan or overlapping tags. Other tags and the text are never modified, and a balanced string is returned unchanged.
+```php
+use Coercive\Utility\Slugify\Slugify;
+
+(new Slugify)->balanceInlineTags('<strong><em>Truncated excerpt…');
+# <strong><em>Truncated excerpt…</em></strong>
+
+(new Slugify)->balanceInlineTags('The urban sprawl (<I>suburbs<I>) and the city');
+# The urban sprawl (<I>suburbs</I>) and the city
+
+(new Slugify)->balanceInlineTags('<strong><em>a</strong>b</em>');
+# <strong><em>a</em></strong><em>b</em>
+
+(new Slugify)->balanceInlineTags('<em><em>ethos</em></em>');
+# <em><em>ethos</em></em> (legit nesting is kept)
+
+# Custom tags list
+(new Slugify)->balanceInlineTags('<span>a<i>b', ['span']);
+# <span>a<i>b</span>
+```
+
 **NAME**
 ```php
 use Coercive\Utility\Slugify;

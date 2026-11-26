@@ -578,6 +578,60 @@ final class SlugifyTest extends TestCase
 		$this->assertSame('<p>Para <b>bold</b></p>', $input);
 	}
 
+	public function testBalanceInlineTags(): void
+	{
+		$cases = [
+			# Already balanced: returned unchanged (case, spaces and other tags included)
+			['<strong>a</strong> and <em>b</em>', '<strong>a</strong> and <em>b</em>'],
+			['<EM>a</EM> <b>c</b >', '<EM>a</EM> <b>c</b >'],
+			['<p>No inline tag <br> here</p>', '<p>No inline tag <br> here</p>'],
+			['Text with a lonely < sign', 'Text with a lonely < sign'],
+			['', ''],
+
+			# Legit nesting of the same tag: kept
+			['<em><em>ethos</em></em> and <sup><sup>[1]</sup></sup>', '<em><em>ethos</em></em> and <sup><sup>[1]</sup></sup>'],
+			['<strong>, <strong>B</strong></strong>, x', '<strong>, <strong>B</strong></strong>, x'],
+
+			# Left open (truncated excerpt): closed at the end
+			['<strong><em>a</em>b <em>c…', '<strong><em>a</em>b <em>c…</em></strong>'],
+			['x<br>1<sup>er</sup> <b class="k">y', 'x<br>1<sup>er</sup> <b class="k">y</b>'],
+
+			# Reopened while open: closing written as an opening
+			['(<I>urban sprawl<I>), next', '(<I>urban sprawl</I>), next'],
+			['<em>Author<em> <br /> Text', '<em>Author</em> <br /> Text'],
+
+			# Self-closing tags
+			['<I>Author<I/>  <BR> Text', '<I>Author</I>  <BR> Text'],
+			['<i/>Title</i> and more', '<i>Title</i> and more'],
+			['a<div><i /></div>b', 'a<div></div>b'],
+
+			# Closing tag with two slashes
+			['<I>Title<//I> next', '<I>Title</I> next'],
+			['Title<//I>', 'Title'],
+
+			# Orphan closing tags
+			['a</em> b <b>c</b>', 'a b <b>c</b>'],
+			['End of a title</i>', 'End of a title'],
+			['<i>First</i> and </i>Second</i>', '<i>First</i> and <i>Second</i>'],
+
+			# Overlapping tags
+			['<strong><em>a</strong>b</em>', '<strong><em>a</em></strong><em>b</em>'],
+		];
+		foreach ($cases as [$input, $expected]) {
+			$this->assertSame($expected, $this->slugify->balanceInlineTags($input), $input);
+
+			# Idempotent: a balanced string is not modified anymore
+			$this->assertSame($expected, $this->slugify->balanceInlineTags($expected), $expected);
+		}
+
+		# Custom tags list: other tags are left untouched
+		$this->assertSame('<span>a<i>b</span>', $this->slugify->balanceInlineTags('<span>a<i>b', ['span']));
+		$this->assertSame('<i>a', $this->slugify->balanceInlineTags('<i>a', []));
+
+		# Block tags are not handled by default
+		$this->assertSame('<p>a<p>b', $this->slugify->balanceInlineTags('<p>a<p>b'));
+	}
+
 	public function testPregName(): void
 	{
 		// Valides – alphabet basique

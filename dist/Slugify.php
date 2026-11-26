@@ -1539,6 +1539,136 @@ class Slugify
 	}
 
 	/**
+	 * Default tags handled by balanceInlineTags()
+	 *
+	 * Inline formatting tags only: when one of them is left open, the browser carries the formatting
+	 * over the rest of the page. Block tags have optional end tags and implicit closing rules (p, li, td...),
+	 * and void tags (br, img...) are never closed: they must not be balanced the same way.
+	 */
+	const INLINE_FORMATTING_TAGS = ['b', 'i', 'u', 's', 'strong', 'em', 'small', 'mark', 'sup', 'sub'];
+
+	/**
+	 * Balance inline formatting tags
+	 *
+	 * Repairs badly closed inline tags (typically from old imports or truncated excerpts) that would
+	 * otherwise turn the rest of the page bold / italic:
+	 * - an orphan closing tag is removed, unless the tag has at least two extra closings:
+	 *   it is then an opening tag written as a closing one ("and </i>Title</i>")
+	 * - a tag reopened while already open closes it ("<I>text<I>"), but only if this tag has more
+	 *   openings than closings: "<em><em>ethos</em></em>" is valid and kept as is
+	 * - a self-closing tag ("<I/>", "<i />"), read by browsers as an opening tag: closes the tag if it is open
+	 *   ("<I>text<I/>"), opens it if the tag has more closings than openings ("<i/>text</i>"), is removed otherwise
+	 * - a closing tag with two slashes "<//I>" is a closing tag
+	 * - overlapping tags "<strong><em>a</strong>b</em>" become "<strong><em>a</em></strong><em>b</em>"
+	 * - every tag still open is closed at the end
+	 *
+	 * Other tags and the text are never modified. A string that is already balanced is returned unchanged.
+	 *
+	 * @param string $str The html to process
+	 * @param string[] $tags [optional] Tags to balance (lowercase names)
+	 * @return string
+	 */
+	public function balanceInlineTags(string $str, array $tags = self::INLINE_FORMATTING_TAGS): string
+	{
+		$pattern = '`<(/*)(' . implode('|', array_map(fn($tag) => preg_quote($tag, '`'), $tags)) . ')\b[^>]*>`i';
+		if (!$tags || !preg_match_all($pattern, $str, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
+			return $str;
+		}
+
+		# Balance of openings minus closings for each tag (self-closing tags do not count)
+		$count = [];
+		foreach ($matches as $match) {
+			$name = strtolower($match[2][0]);
+			$selfClosing = '' === $match[1][0] && substr($match[0][0], -2) === '/>';
+			$count[$name] = ($count[$name] ?? 0) + ('' !== $match[1][0] ? -1 : ($selfClosing ? 0 : 1));
+		}
+
+		$open = []; # Stack of open tags: [name, original name, original tag]
+		$result = '';
+		$offset = 0;
+		foreach ($matches as $match) {
+			$tag = $match[0][0];
+			$position = (int) $match[0][1]; # Offset given by PREG_OFFSET_CAPTURE
+			$rawName = $match[2][0];
+			$name = strtolower($rawName);
+			$closing = '' !== $match[1][0];
+			$selfClosing = !$closing && substr($tag, -2) === '/>';
+
+			# Text before the tag
+			$result .= substr($str, $offset, $position - $offset);
+			$offset = $position + strlen($tag);
+
+			# Is the same tag already open?
+			$index = null;
+			for ($i = count($open) - 1; $i >= 0; $i--) {
+				if ($open[$i][0] === $name) {
+					$index = $i;
+					break;
+				}
+			}
+
+			# Self-closing tag: closing, opening or nothing
+			if ($selfClosing) {
+				if (null !== $index) {
+					$count[$name]--;
+				}
+				elseif ($count[$name] < 0) {
+					$count[$name]++;
+					$tag = "<$rawName>";
+					$open[] = [$name, $rawName, $tag];
+					$result .= $tag;
+					continue;
+				}
+				else {
+					continue;
+				}
+			}
+
+			# Opening (legit nesting included)
+			elseif (!$closing && (null === $index || $count[$name] <= 0)) {
+				$open[] = [$name, $rawName, $tag];
+				$result .= $tag;
+				continue;
+			}
+
+			# Orphan closing: opening if there are at least two extra closings, removed otherwise
+			if (null === $index) {
+				if ($closing && $count[$name] <= -2) {
+					$count[$name] += 2;
+					$tag = "<$rawName>";
+					$open[] = [$name, $rawName, $tag];
+					$result .= $tag;
+				}
+				continue;
+			}
+
+			# Reopening used as a closing: one extra opening less
+			if (!$closing && !$selfClosing) {
+				$count[$name] -= 2;
+			}
+
+			# Closing: first close the tags opened inside, then reopen them
+			$inside = array_splice($open, $index + 1);
+			foreach (array_reverse($inside) as $item) {
+				$result .= "</$item[1]>";
+			}
+			$result .= '/' === $match[1][0] && !$inside ? $tag : '</' . $open[$index][1] . '>';
+			array_pop($open);
+			foreach ($inside as $item) {
+				$result .= $item[2];
+				$open[] = $item;
+			}
+		}
+		$result .= substr($str, $offset);
+
+		# Close every tag still open
+		foreach (array_reverse($open) as $item) {
+			$result .= "</$item[1]>";
+		}
+		return $result;
+	}
+
+	/**
 	 * Detecting a valid name or first name international
 	 *
 	 * @param string $name
